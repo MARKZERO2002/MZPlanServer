@@ -1,0 +1,10 @@
+行号: 38  文件: ..\..\DATA\mydata.cpp  函数: void MyData::initConfig()
+Debug 创建config.ini文件
+行号: 59  文件: ..\..\DATA\mydata.cpp  函数: void MyData::loadConfig()
+Debug Mysql服务器地址： "127.0.0.1"  端口号: 3306
+Warnx QSqlDatabase: QMYSQL driver not loaded
+Warnx QSqlDatabase: available drivers: QSQLITE QMIMER QODBC QPSQL
+行号: 10  文件: ..\..\NETWORK\networkuntil.cpp  函数: NetWorkUntil::NetWorkUntil(QObject*)
+Debug 服务器端口号： "1314"
+行号: 38  文件: ..\..\NETWORK\networkuntil.cpp  函数: QHostAddress NetWorkUntil::getLocalHost()
+Debug 服务器ip地址： "192.168.63.1"
