@@ -11,12 +11,12 @@ MZPlan_server::MZPlan_server(QObject *parent)
     : QObject(parent)
 {
     SaveLog::Instance()->setName("Mylog");
-    SaveLog::Instance()->start();
+    // SaveLog::Instance()->start();
     MyData::getInstance();
-    this->networkUntil=new NetWorkUntil(this);
+    NetWorkUntil::getInstance();
 }
 
 MZPlan_server::~MZPlan_server()
 {
-    SaveLog::Instance()->stop();
+    // SaveLog::Instance()->stop();
 }

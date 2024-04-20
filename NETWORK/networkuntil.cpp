@@ -1,4 +1,5 @@
 #include "networkuntil.h"
+#include "protocol.h"
 #include <QHostInfo>
 NetWorkUntil::NetWorkUntil(QObject *parent)
     : QObject{parent}
@@ -12,6 +13,12 @@ NetWorkUntil::NetWorkUntil(QObject *parent)
     connect(this->tcpServer,SIGNAL(newConnection()),this,SLOT(handleTcpNewConnected()));
 }
 
+NetWorkUntil &NetWorkUntil::getInstance()
+{
+    static NetWorkUntil instance;
+    return instance;
+}
+
 NetWorkUntil::~NetWorkUntil()
 {
     if(this->tcpServer->isListening())
@@ -19,6 +26,54 @@ NetWorkUntil::~NetWorkUntil()
     for(const auto &tcpSocket:this->tcpSocketList){
         if(tcpSocket!=nullptr&&tcpSocket->state()==QAbstractSocket::ConnectedState)//如果不为空并且还在连接
             tcpSocket->disconnectFromHost();//断开与客户端的连接
+    }
+}
+
+void NetWorkUntil::addDevice(QString username, MyTcpSocket *tcpSocket)
+{
+    //如果map中没有这个用户，就新建一个列表
+    if(!this->userDevices.contains(username)){
+        QList<MyTcpSocket*> list;
+        list.append(tcpSocket);
+        this->userDevices.insert(username,list);
+    }else{//有这个用户，就加入这个列表
+        QList<MyTcpSocket*> list=this->userDevices.value(username);
+        list.append(tcpSocket);
+        this->userDevices.insert(username,list);
+    }
+}
+
+void NetWorkUntil::deleteDevice(QString username, MyTcpSocket *tcpSocket)
+{
+    //如果map中没有这个用户，则不管
+    if(this->userDevices.contains(username)){
+        QList<MyTcpSocket*> list=this->userDevices.value(username);
+        //如果list中有这个tcpSocket，则删除
+        int index=list.indexOf(tcpSocket);
+        if(index!=-1)
+            list.removeAt(index);
+        if(list.size()==0)
+            this->userDevices.remove(username);
+        else
+            this->userDevices.insert(username,list);
+    }
+}
+
+void NetWorkUntil::synchronizeDevice(QString username, MyTcpSocket *orgin_socket,QByteArray dbData,QString medifyTime)
+{
+    //对该用户除orgin_socket的设备发送更新请求
+    QList<MyTcpSocket*> list=this->userDevices.value(username);
+    PDU pdu;
+    pdu.msgType=UPDATE;
+    QJsonObject jsObj;
+    jsObj.insert(MEDIFYTIME,medifyTime);
+    QString d=dbData.toBase64();
+    jsObj.insert(DB_DATA,d);
+    pdu.data=jsObj;
+    for(auto socket:list){
+        if(socket==orgin_socket)
+            continue;
+        socket->write(pdu.toByteArray());
     }
 }
 

@@ -1,4 +1,5 @@
 #include "mytcpsocket.h"
+#include "networkuntil.h"
 #include "protocol.h"
 #include <QThreadPool>
 #include <DATA/mydata.h>
@@ -29,8 +30,10 @@ void MyTcpSocket::handleTcpSocketConnected()
 void MyTcpSocket::handleTcpSocketDisconnected()
 {
     qDebug()<<"socket断开";
-    //发出信号通知server删除自己
+    //删除锁和已登录设备
     MyData::getInstance().deleteLock(this->username);
+    NetWorkUntil::getInstance().deleteDevice(this->username,this);
+    //发出信号通知server删除自己
     emit deleteSelf(this);
 }
 /**

@@ -2,6 +2,7 @@
 #define TCPTASK_H
 #include <QJsonObject>
 #include <QRunnable>
+#include <NETWORK/mytcpsocket.h>
 #include "NETWORK/protocol.h"
 
 /**
@@ -11,7 +12,7 @@
 class TcpTask : public QRunnable
 {
 public:
-    TcpTask(const PDU &pdu,QObject *obj);
+    TcpTask(const PDU &pdu,MyTcpSocket *socket);
     void run() override;
 private:
     void handleLogin();
@@ -22,7 +23,7 @@ private:
 private:
     MsgType msgType;//消息类型
     QJsonObject data;//数据
-    QObject *obj;
+    MyTcpSocket *socket;
 };
 
 #endif // TCPTASK_H

@@ -4,8 +4,9 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <ENTITY/user.h>
-TcpTask::TcpTask(const PDU &pdu,QObject *obj):
-    obj(obj)
+#include <NETWORK/networkuntil.h>
+TcpTask::TcpTask(const PDU &pdu,MyTcpSocket *socket):
+    socket(socket)
 {
     this->msgType=pdu.msgType;
     this->data=pdu.data;
@@ -40,7 +41,7 @@ void TcpTask::handleLogin()
 {
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString(),password=jsObj.value(PASSWORD).toString();//此处可对密码添加解密功能
-
+    qDebug()<<username<<"登陆";
     PDU pdu;
     QJsonObject ansData;//返回的数据
     pdu.msgType=LOGIN_RESPONSE;
@@ -63,8 +64,9 @@ void TcpTask::handleLogin()
         ansData.insert(MSG_STRING,"用户不存在");
     }
     pdu.data=ansData;
-    this->sendData(pdu.toByteArray());
     MyData::getInstance().creadLock(username);
+    NetWorkUntil::getInstance().addDevice(username,this->socket);//加入登陆设备
+    this->sendData(pdu.toByteArray());
     // this->tcpSocket->write(ansJsDoc.toJson());//不要在子线程中操作其它线程生成的socket
 }
 /**
@@ -75,7 +77,7 @@ void TcpTask::handleRegist()
 {
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString(),password=jsObj.value(PASSWORD).toString();//此处可对密码添加解密功能
-
+    qDebug()<<username<<"注册";
     PDU pdu;
     QJsonObject ansData;//返回的数据
     pdu.msgType=REGIST_RESPONSE;
@@ -109,6 +111,7 @@ void TcpTask::handleCancel()
     //提取数据
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString();
+    qDebug()<<username<<"注销";
     MyData::getInstance().creadLock(username);//锁住后进行删除操作
     //返回的数据
     PDU pdu;
@@ -135,6 +138,7 @@ void TcpTask::handleSynochronize()
     //接受的数据
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString();
+    qDebug()<<username<<"同步";
     QByteArray dbData=QByteArray::fromBase64(jsObj.value(DB_DATA).toString().toUtf8());
     QString userMedifyTime=jsObj.value(MEDIFYTIME).toString();
     MyData::getInstance().creadLock(username);
@@ -160,6 +164,8 @@ void TcpTask::handleSynochronize()
         MyData::getInstance().writeMedifyTime(username,userMedifyTime);
         //返回信息
         ansData.insert(MSG_STRING,"更新服务器的数据");
+        //发送消息给其它机器
+        NetWorkUntil::getInstance().synchronizeDevice(username,this->socket,dbData,userMedifyTime);
     }
     pdu.data=ansData;
     this->sendData(pdu.toByteArray());
@@ -172,6 +178,6 @@ void TcpTask::handleSynochronize()
  */
 void TcpTask::sendData(const QByteArray &data)
 {
-    QMetaObject::invokeMethod(obj, "sendData", Qt::BlockingQueuedConnection,//当前线程将阻塞，直到事件被传递。使用此连接类型在同一线程中的对象之间进行通信将导致死锁。
+    QMetaObject::invokeMethod(socket, "sendData", Qt::BlockingQueuedConnection,//当前线程将阻塞，直到事件被传递。使用此连接类型在同一线程中的对象之间进行通信将导致死锁。
                               Q_ARG(QByteArray,data));//传参
 }

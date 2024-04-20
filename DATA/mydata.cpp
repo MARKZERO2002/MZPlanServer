@@ -90,7 +90,6 @@ void MyData::createUserDir(const QString &username)
 
 User MyData::getUser(const QString &username)
 {
-    qDebug()<<"登陆"<<username;
     User user;
     //在数据库中读取用户信息
     QSqlQuery query(db);
