@@ -3,17 +3,21 @@
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <qtimer.h>
 #include <ENTITY/user.h>
 #include <NETWORK/networkuntil.h>
-TcpTask::TcpTask(const PDU &pdu,MyTcpSocket *socket):
-    socket(socket)
+TcpTask::TcpTask(const PDU &pdu,MyTcpSocket *socket)
 {
     this->msgType=pdu.msgType;
     this->data=pdu.data;
+    this->socket=socket;
+    qDebug()<<socket;
 }
 
 void TcpTask::run()
 {
+    if(this->msgType<=MsgTypeMeans.size())
+        qDebug()<<"收到："<<MsgTypeMeans.at(this->msgType);
     //根据消息类型判断怎么处理
     switch(this->msgType){
     case LOGIN_REQUEST:
@@ -41,7 +45,6 @@ void TcpTask::handleLogin()
 {
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString(),password=jsObj.value(PASSWORD).toString();//此处可对密码添加解密功能
-    qDebug()<<username<<"登陆";
     PDU pdu;
     QJsonObject ansData;//返回的数据
     pdu.msgType=LOGIN_RESPONSE;
@@ -66,6 +69,7 @@ void TcpTask::handleLogin()
     pdu.data=ansData;
     MyData::getInstance().creadLock(username);
     NetWorkUntil::getInstance().addDevice(username,this->socket);//加入登陆设备
+    qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
     this->sendData(pdu.toByteArray());
     // this->tcpSocket->write(ansJsDoc.toJson());//不要在子线程中操作其它线程生成的socket
 }
@@ -77,7 +81,6 @@ void TcpTask::handleRegist()
 {
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString(),password=jsObj.value(PASSWORD).toString();//此处可对密码添加解密功能
-    qDebug()<<username<<"注册";
     PDU pdu;
     QJsonObject ansData;//返回的数据
     pdu.msgType=REGIST_RESPONSE;
@@ -100,6 +103,7 @@ void TcpTask::handleRegist()
         ansData.insert(MSG_STRING,"新增用户失败，用户已存在");
     }
     pdu.data=ansData;
+    qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
     this->sendData(pdu.toByteArray());
 }
 /**
@@ -111,7 +115,6 @@ void TcpTask::handleCancel()
     //提取数据
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString();
-    qDebug()<<username<<"注销";
     MyData::getInstance().creadLock(username);//锁住后进行删除操作
     //返回的数据
     PDU pdu;
@@ -124,6 +127,7 @@ void TcpTask::handleCancel()
         ansData.insert(CHECK,false);
     }
     pdu.data=ansData;
+    qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
     this->sendData(pdu.toByteArray());
 }
 /**
@@ -138,7 +142,6 @@ void TcpTask::handleSynochronize()
     //接受的数据
     QJsonObject jsObj=this->data;
     QString username=jsObj.value(USERNAME).toString();
-    qDebug()<<username<<"同步";
     QByteArray dbData=QByteArray::fromBase64(jsObj.value(DB_DATA).toString().toUtf8());
     QString userMedifyTime=jsObj.value(MEDIFYTIME).toString();
     MyData::getInstance().creadLock(username);
@@ -165,9 +168,12 @@ void TcpTask::handleSynochronize()
         //返回信息
         ansData.insert(MSG_STRING,"更新服务器的数据");
         //发送消息给其它机器
-        NetWorkUntil::getInstance().synchronizeDevice(username,this->socket,dbData,userMedifyTime);
+        QTimer::singleShot(100, &NetWorkUntil::getInstance(),[username,this,dbData,userMedifyTime](){
+            NetWorkUntil::getInstance().synchronizeDevice(username,this->socket,dbData,userMedifyTime);
+        });
     }
     pdu.data=ansData;
+    qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
     this->sendData(pdu.toByteArray());
 }
 

@@ -73,6 +73,7 @@ void NetWorkUntil::synchronizeDevice(QString username, MyTcpSocket *orgin_socket
     for(auto socket:list){
         if(socket==orgin_socket)
             continue;
+        qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
         socket->write(pdu.toByteArray());
     }
 }
@@ -90,7 +91,6 @@ QHostAddress NetWorkUntil::getLocalHost()
     foreach(QHostAddress hostAddress,addressList){
         if(QAbstractSocket::IPv4Protocol==hostAddress.protocol()){
             //打印服务器使用的ip地址
-            qDebug()<<"服务器ip地址："<<hostAddress.toString();
             return hostAddress;
         }
     }
@@ -110,18 +110,16 @@ void NetWorkUntil::handleTcpNewConnected()
     //建立一个新socket
     MyTcpSocket *tcpSocket=new MyTcpSocket(this);
     tcpSocket->setSocketDescriptor(this->tcpServer->nextPendingConnection()->socketDescriptor());//获取客户端连接的socket
-    this->tcpSocketList.append(tcpSocket);//加入列表中
     //连接信号
     connect(tcpSocket,&MyTcpSocket::connected,tcpSocket,&MyTcpSocket::handleTcpSocketConnected);
     connect(tcpSocket,&MyTcpSocket::disconnected,tcpSocket,&MyTcpSocket::handleTcpSocketDisconnected);
     connect(tcpSocket,&MyTcpSocket::readyRead,tcpSocket,&MyTcpSocket::handleTcpSocketReadyRead);
     connect(tcpSocket,&MyTcpSocket::deleteSelf,this,&NetWorkUntil::deleteTcpSocket);
+    this->tcpSocketList.append(tcpSocket);//加入列表中
 }
 
 void NetWorkUntil::deleteTcpSocket(MyTcpSocket *tcpsocket)
 {
-    if(tcpsocket!=nullptr&&tcpsocket->state()==QAbstractSocket::ConnectedState)//如果不为空并且还在连接
-        tcpsocket->disconnectFromHost();//断开与客户端的连接
     this->tcpSocketList.removeOne(tcpsocket);//移除元素
     delete tcpsocket;
     tcpsocket=nullptr;

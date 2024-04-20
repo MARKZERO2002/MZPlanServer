@@ -43,9 +43,16 @@ void MyTcpSocket::handleTcpSocketDisconnected()
  */
 void MyTcpSocket::handleTcpSocketReadyRead()
 {
-    qDebug()<<"收到客户端的数据";
-    PDU pdu(this->readAll());
-    qDebug()<<"消息类型:"<<pdu.msgType;
+    //检测收到的数据是否是完整的json格式
+    this->m_buffer.append(this->readAll());
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(m_buffer, &error);
+    if(error.error!=QJsonParseError::NoError){//说明没接收到完整消息
+        return;
+    }
+    //收到完整消息了 释放缓冲区
+    this->m_buffer.clear();
+    PDU pdu(doc);
     if(pdu.data.contains(USERNAME)){
         this->username=pdu.data.value(USERNAME).toString();
     }
@@ -57,6 +64,5 @@ void MyTcpSocket::handleTcpSocketReadyRead()
 
 void MyTcpSocket::sendData(const QByteArray &data)
 {
-    qDebug()<<"发送数据";
     this->write(data);
 }

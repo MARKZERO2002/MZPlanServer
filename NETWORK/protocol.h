@@ -14,6 +14,8 @@
 #define DONEPLAN "donePlan"
 #define MEDIFYTIME "medifyTime"
 #define DB_DATA "dbData"
+static QList<QString> MsgTypeMeans{"登录请求","注册请求","注销请求","同步请求"
+                                   ,"登陆反馈","注册反馈","注销反馈","同步反馈","更新反馈"};
 //客户端发来的消息类型
 enum MsgType{
     //客户端发出
@@ -34,14 +36,7 @@ enum MsgType{
 struct PDU{
     PDU(){
     }
-    PDU(QByteArray byteData){
-        //从byteData中读出消息类型
-        QJsonParseError e;
-        QJsonDocument jsDoc=QJsonDocument::fromJson(byteData,&e);
-        if(e.error!=QJsonParseError::NoError){
-            qDebug()<<"(protocol.h)解析传输数据时失败:"<<e.errorString();
-            return;
-        }
+    PDU(QJsonDocument jsDoc){
         //根据消息类型从byteData中读出数据，存入jsonDoc中
         QJsonObject jsObj=jsDoc.object();
         this->msgType=(MsgType)jsObj.value(MSGTYPE).toInt();

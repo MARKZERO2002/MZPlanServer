@@ -22,6 +22,9 @@ public slots:
      * 当服务端发送数据来时，多线程调用处理函数
      */
     void handleTcpSocketReadyRead();//tcp收到消息
+private:
+    QByteArray m_buffer;//接收数据缓冲区
+
 signals:
     void deleteSelf(MyTcpSocket *tcpScoket);
 };
