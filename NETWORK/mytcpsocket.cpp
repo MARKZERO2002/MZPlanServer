@@ -29,7 +29,6 @@ void MyTcpSocket::handleTcpSocketConnected()
  */
 void MyTcpSocket::handleTcpSocketDisconnected()
 {
-    qDebug()<<"socket断开";
     //删除锁和已登录设备
     MyData::getInstance().deleteLock(this->username);
     NetWorkUntil::getInstance().deleteDevice(this->username,this);
@@ -45,13 +44,16 @@ void MyTcpSocket::handleTcpSocketReadyRead()
 {
     //检测收到的数据是否是完整的json格式
     this->m_buffer.append(this->readAll());
+    // qDebug()<<this->m_buffer;
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(m_buffer, &error);
     if(error.error!=QJsonParseError::NoError){//说明没接收到完整消息
+        qDebug()<<"没有接收到完整消息";
         return;
     }
     //收到完整消息了 释放缓冲区
     this->m_buffer.clear();
+    qDebug()<<"接收到完整数据，开始处理";
     PDU pdu(doc);
     if(pdu.data.contains(USERNAME)){
         this->username=pdu.data.value(USERNAME).toString();
