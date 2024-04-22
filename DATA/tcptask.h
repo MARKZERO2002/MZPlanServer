@@ -12,7 +12,7 @@
 class TcpTask : public QRunnable
 {
 public:
-    TcpTask(const PDU &pdu,MyTcpSocket *socket);
+    TcpTask(const Pdu &pdu,MyTcpSocket *socket);
     void run() override;
 private:
     void handleLogin();

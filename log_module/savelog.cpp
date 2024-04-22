@@ -58,6 +58,7 @@ void Log(QtMsgType type, const char *msg)
             }
             break;
     }
+        content.append(" Time:"+QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss"));
 
     //没有内容则返回
     if (content.isEmpty()) {

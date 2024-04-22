@@ -23,10 +23,6 @@ NetWorkUntil::~NetWorkUntil()
 {
     if(this->tcpServer->isListening())
         this->tcpServer->close();
-    for(const auto &tcpSocket:this->tcpSocketList){
-        if(tcpSocket!=nullptr&&tcpSocket->state()==QAbstractSocket::ConnectedState)//如果不为空并且还在连接
-            tcpSocket->disconnectFromHost();//断开与客户端的连接
-    }
 }
 
 void NetWorkUntil::addDevice(QString username, MyTcpSocket *tcpSocket)
@@ -63,18 +59,15 @@ void NetWorkUntil::synchronizeDevice(QString username, MyTcpSocket *orgin_socket
 {
     //对该用户除orgin_socket的设备发送更新请求
     QList<MyTcpSocket*> list=this->userDevices.value(username);
-    PDU pdu;
-    pdu.msgType=UPDATE;
     QJsonObject jsObj;
     jsObj.insert(MEDIFYTIME,medifyTime);
     QString d=dbData.toBase64();
     jsObj.insert(DB_DATA,d);
-    pdu.data=jsObj;
     for(auto socket:list){
         if(socket==orgin_socket)
             continue;
-        qDebug()<<"发出:"<<MsgTypeMeans.at(pdu.msgType);
-        socket->write(pdu.toByteArray());
+        qDebug()<<"发出:"<<MsgTypeMeans.at(UPDATE);
+        socket->sendData(createSendData(UPDATE,jsObj));
     }
 }
 
@@ -122,6 +115,7 @@ void NetWorkUntil::handleTcpNewConnected()
 void NetWorkUntil::deleteTcpSocket(MyTcpSocket *tcpsocket)
 {
     qDebug()<<"socket断开";
+    tcpsocket->close();
     this->tcpSocketList.removeOne(tcpsocket);//移除元素
     tcpsocket->deleteLater();
     tcpsocket=nullptr;

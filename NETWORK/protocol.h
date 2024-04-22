@@ -1,6 +1,7 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 #include <QByteArray>
+#include <QIODevice>
 #include <QJsonDocument>
 #include <QJsonObject>
 //发送和接收的字段
@@ -32,26 +33,37 @@ enum MsgType{
     UPDATE
 
 };
-
-struct PDU{
-    PDU(){
-    }
-    PDU(QJsonDocument jsDoc){
-        //根据消息类型从byteData中读出数据，存入jsonDoc中
-        QJsonObject jsObj=jsDoc.object();
-        this->msgType=(MsgType)jsObj.value(MSGTYPE).toInt();
-        this->data=jsObj.value(DATA).toObject();
-    }
-    QByteArray toByteArray(){
-        //把数据变为QByteArray
-        QJsonObject obj;
-        obj.insert(MSGTYPE,this->msgType);
-        obj.insert(DATA,this->data);
-        QJsonDocument doc=QJsonDocument(obj);
-        return doc.toJson();
-    }
+struct PduHearder{
     MsgType msgType;//消息类型
+    quint32 length;//消息长度 不包括头！
+};
+
+struct Pdu{
+    PduHearder header;
     QJsonObject data;//数据
 };
+
+
+
+//构建发送数据
+static QByteArray createSendData(const MsgType& msgType,const QJsonObject& jsObj){
+    //计算消息长度
+    QByteArray jsonData=QJsonDocument(jsObj).toJson();
+    quint32 length=static_cast<quint32>(jsonData.size());
+    //构建发送数据
+    QByteArray data;
+    QDataStream stream(&data,QIODevice::WriteOnly);
+    stream<<static_cast<quint32>(msgType) << length;
+    data+=jsonData;
+    return data;
+}
+
+static PduHearder deserializeHeader(const QByteArray &data) {
+    PduHearder header;
+    QDataStream stream(data);
+    stream >> header.msgType >> header.length;
+    return header;
+}
+
 
 #endif // PROTOCOL_H
