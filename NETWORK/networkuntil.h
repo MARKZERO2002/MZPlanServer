@@ -24,6 +24,7 @@ private:
     QMap<QString,QList<MyTcpSocket*>> userDevices;//存储已登录的用户设备 用于发送更新请求
 public slots:
     void handleTcpNewConnected();//tcpserver传入新连接
+    void addTcpSocket(MyTcpSocket* tcpsocket);
     void deleteTcpSocket(MyTcpSocket* tcpsocket);
     void synchronizeDevice(QString username,MyTcpSocket* orgin_socket,QByteArray dbData,QString medifyTime);//对除orgin_socket外的socket发送更新请求
 signals:

@@ -161,6 +161,8 @@ void TcpTask::handleSynochronize()
             NetWorkUntil::getInstance().synchronizeDevice(username,this->socket,dbData,userMedifyTime);
         });
     }
+    MyData::getInstance().creadLock(username);
+    NetWorkUntil::getInstance().addDevice(username,this->socket);//加入登陆设备
     qDebug()<<"发出:"<<MsgTypeMeans.at(SYNOCHRONIZE_PLAN_RESPONSE);
     this->sendData(createSendData(SYNOCHRONIZE_PLAN_RESPONSE,ansData));
 }

@@ -34,6 +34,10 @@ void NetWorkUntil::addDevice(QString username, MyTcpSocket *tcpSocket)
         this->userDevices.insert(username,list);
     }else{//有这个用户，就加入这个列表
         QList<MyTcpSocket*> list=this->userDevices.value(username);
+        //有这个socket就不管
+        int index=list.indexOf(tcpSocket);
+        if(index!=-1)
+            return;
         list.append(tcpSocket);
         this->userDevices.insert(username,list);
     }
@@ -108,14 +112,16 @@ void NetWorkUntil::handleTcpNewConnected()
     connect(tcpSocket,&MyTcpSocket::disconnected,tcpSocket,&MyTcpSocket::handleTcpSocketDisconnected);
     connect(tcpSocket,&MyTcpSocket::readyRead,tcpSocket,&MyTcpSocket::handleTcpSocketReadyRead);
     connect(tcpSocket,&MyTcpSocket::deleteSelf,this,&NetWorkUntil::deleteTcpSocket);
-    if(tcpSocket->state()==QAbstractSocket::ConnectedState)
-        this->tcpSocketList.append(tcpSocket);//加入列表中
+}
+
+void NetWorkUntil::addTcpSocket(MyTcpSocket *tcpsocket)
+{
+    this->tcpSocketList.append(tcpsocket);
 }
 
 void NetWorkUntil::deleteTcpSocket(MyTcpSocket *tcpsocket)
 {
-    qDebug()<<"socket断开";
-    tcpsocket->close();
+    qDebug()<<"socket断开:"<<tcpsocket->errorString();
     this->tcpSocketList.removeOne(tcpsocket);//移除元素
     tcpsocket->deleteLater();
     tcpsocket=nullptr;
