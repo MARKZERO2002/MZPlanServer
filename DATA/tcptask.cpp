@@ -32,6 +32,9 @@ void TcpTask::run()
     case SYNOCHRONIZE_PLAN_REQUEST:
         handleSynochronize();
         break;
+    case PALPITATE:
+        qDebug()<<"收到"<<this->socket<<"心跳";
+        break;
     default:
         qDebug()<<"消息类型"<<this->msgType<<"未找到处理函数";
         break;

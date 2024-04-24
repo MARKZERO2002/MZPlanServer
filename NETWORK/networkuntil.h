@@ -25,7 +25,7 @@ private:
 public slots:
     void handleTcpNewConnected();//tcpserver传入新连接
     void addTcpSocket(MyTcpSocket* tcpsocket);
-    void deleteTcpSocket(MyTcpSocket* tcpsocket);
+    void deleteTcpSocket();
     void synchronizeDevice(QString username,MyTcpSocket* orgin_socket,QByteArray dbData,QString medifyTime);//对除orgin_socket外的socket发送更新请求
 signals:
 };

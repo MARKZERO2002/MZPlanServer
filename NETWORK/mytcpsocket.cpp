@@ -28,13 +28,12 @@ void MyTcpSocket::handleTcpSocketConnected()
  */
 void MyTcpSocket::handleTcpSocketDisconnected()
 {
+    QThreadPool::globalInstance()->waitForDone();
     //删除锁和已登录设备
     if(!this->username.isEmpty()&&!this->username.isNull()){
         MyData::getInstance().deleteLock(this->username);
         NetWorkUntil::getInstance().deleteDevice(this->username,this);
     }
-    //发出信号通知server删除自己
-    emit deleteSelf(this);
 }
 /**
  * @brief NetWorkUntil::handleSocketReadyRead
@@ -43,9 +42,9 @@ void MyTcpSocket::handleTcpSocketDisconnected()
  */
 void MyTcpSocket::handleTcpSocketReadyRead()
 {
-    while(this->bytesAvailable()){
         //存入缓冲区
         this->m_buffer.append(this->readAll());
+        qDebug()<<this->m_buffer;
         //查看是否收到完整头
         if(this->m_buffer.size()<static_cast<qsizetype>(sizeof(quint32)*2)){//因为协议的头是由两个32int组成的
             qDebug()<<"没接收到完整头";
@@ -76,7 +75,6 @@ void MyTcpSocket::handleTcpSocketReadyRead()
         TcpTask *task=new TcpTask(pdu,this);
         //多线程处理任务
         QThreadPool::globalInstance()->start(task);//task执行完毕后，会自动删除task对象
-    }
 }
 
 void MyTcpSocket::sendData(const QByteArray &data)

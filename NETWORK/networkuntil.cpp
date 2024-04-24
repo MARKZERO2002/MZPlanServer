@@ -107,11 +107,14 @@ void NetWorkUntil::handleTcpNewConnected()
     //建立一个新socket
     MyTcpSocket *tcpSocket=new MyTcpSocket(this);
     tcpSocket->setSocketDescriptor(this->tcpServer->nextPendingConnection()->socketDescriptor());//获取客户端连接的socket
+    tcpSocket->setSocketOption(QAbstractSocket::KeepAliveOption,true);
     //连接信号
     connect(tcpSocket,&MyTcpSocket::connected,tcpSocket,&MyTcpSocket::handleTcpSocketConnected);
     connect(tcpSocket,&MyTcpSocket::disconnected,tcpSocket,&MyTcpSocket::handleTcpSocketDisconnected);
     connect(tcpSocket,&MyTcpSocket::readyRead,tcpSocket,&MyTcpSocket::handleTcpSocketReadyRead);
-    connect(tcpSocket,&MyTcpSocket::deleteSelf,this,&NetWorkUntil::deleteTcpSocket);
+    connect(tcpSocket,&MyTcpSocket::disconnected,this,&NetWorkUntil::deleteTcpSocket);
+    connect(tcpSocket,&MyTcpSocket::errorOccurred,tcpSocket,&MyTcpSocket::deleteLater);
+    this->addTcpSocket(tcpSocket);
 }
 
 void NetWorkUntil::addTcpSocket(MyTcpSocket *tcpsocket)
@@ -119,8 +122,9 @@ void NetWorkUntil::addTcpSocket(MyTcpSocket *tcpsocket)
     this->tcpSocketList.append(tcpsocket);
 }
 
-void NetWorkUntil::deleteTcpSocket(MyTcpSocket *tcpsocket)
+void NetWorkUntil::deleteTcpSocket()
 {
+    MyTcpSocket* tcpsocket=(MyTcpSocket*)sender();
     qDebug()<<"socket断开:"<<tcpsocket->errorString();
     this->tcpSocketList.removeOne(tcpsocket);//移除元素
     tcpsocket->deleteLater();

@@ -16,7 +16,7 @@
 #define MEDIFYTIME "medifyTime"
 #define DB_DATA "dbData"
 static QList<QString> MsgTypeMeans{"登录请求","注册请求","注销请求","同步请求"
-                                   ,"登陆反馈","注册反馈","注销反馈","同步反馈","更新反馈"};
+                                   ,"登陆反馈","注册反馈","注销反馈","同步反馈","更新反馈","心跳包"};
 //客户端发来的消息类型
 enum MsgType{
     //客户端发出
@@ -30,7 +30,9 @@ enum MsgType{
     CANCEL_RESPONSE,
     SYNOCHRONIZE_PLAN_RESPONSE,
     //要求更新客户端数据
-    UPDATE
+    UPDATE,
+    //心跳
+    PALPITATE
 
 };
 struct PduHearder{
