@@ -44,7 +44,7 @@ void MyTcpSocket::handleTcpSocketReadyRead()
 {
         //存入缓冲区
         this->m_buffer.append(this->readAll());
-        qDebug()<<this->m_buffer;
+        // qDebug()<<this->m_buffer;
         //查看是否收到完整头
         if(this->m_buffer.size()<static_cast<qsizetype>(sizeof(quint32)*2)){//因为协议的头是由两个32int组成的
             qDebug()<<"没接收到完整头";
@@ -75,6 +75,38 @@ void MyTcpSocket::handleTcpSocketReadyRead()
         TcpTask *task=new TcpTask(pdu,this);
         //多线程处理任务
         QThreadPool::globalInstance()->start(task);//task执行完毕后，会自动删除task对象
+}
+
+void MyTcpSocket::handleStateChanged(QAbstractSocket::SocketState socketState)
+{
+    switch(socketState)
+    {
+    case QAbstractSocket::UnconnectedState:
+        qDebug()<<"socket状态：UnconnectedState";
+        this->close();
+        break;
+    case QAbstractSocket::HostLookupState:
+        qDebug()<<"socket状态：HostLookupState";
+        break;
+    case QAbstractSocket::ConnectingState:
+        qDebug()<<"socket状态：ConnectingState";
+        break;
+    case QAbstractSocket::ConnectedState:
+        qDebug()<<"socket状态：ConnectedState";
+        break;
+    case QAbstractSocket::BoundState:
+        qDebug()<<"socket状态：BoundState";
+        break;
+    case QAbstractSocket::ClosingState:
+        qDebug()<<"socket状态：ClosingState";
+        break;
+    case QAbstractSocket::ListeningState:
+        qDebug()<<"socket状态：ListeningState";
+        break;
+    default:
+        qDebug()<<"未知soucket状态:"<<socketState;
+        break;
+    }
 }
 
 void MyTcpSocket::sendData(const QByteArray &data)

@@ -235,6 +235,7 @@ void MyData::deleteLock(const QString &username)
     mutex.lock();
     //已经无锁
     if(!this->locks.contains(username)){
+        mutex.unlock();//返回前一定要释放锁啊
         return ;
     }
     QReadWriteLock *RWlock=this->locks.value(username);

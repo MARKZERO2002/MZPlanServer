@@ -114,6 +114,7 @@ void NetWorkUntil::handleTcpNewConnected()
     connect(tcpSocket,&MyTcpSocket::readyRead,tcpSocket,&MyTcpSocket::handleTcpSocketReadyRead);
     connect(tcpSocket,&MyTcpSocket::disconnected,this,&NetWorkUntil::deleteTcpSocket);
     connect(tcpSocket,&MyTcpSocket::errorOccurred,tcpSocket,&MyTcpSocket::deleteLater);
+    connect(tcpSocket,&MyTcpSocket::stateChanged,tcpSocket,&MyTcpSocket::handleStateChanged);
     this->addTcpSocket(tcpSocket);
 }
 
